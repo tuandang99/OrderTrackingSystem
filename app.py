@@ -101,8 +101,10 @@ def save_video():
             os.makedirs(date_dir)
         
         # Generate unique filename using timestamp and order ID
+        # Clean order_id to make it safe for filenames (remove invalid characters)
+        safe_order_id = ''.join(c for c in order_id if c.isalnum() or c in '-_')
         timestamp = datetime.now().strftime('%H-%M-%S')
-        filename = f"{order_id}_{timestamp}.mp4"
+        filename = f"{safe_order_id}_{timestamp}.mp4"
         filepath = os.path.join(date_dir, filename)
         
         # Save the video file
