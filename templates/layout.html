@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Packaging Video Recorder</title>
     
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Ứng dụng quay video đóng gói đơn hàng với QR Scanner">
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Video Recorder">
+    <meta name="msapplication-TileImage" content="{{ url_for('static', filename='icons/icon-144x144.png') }}">
+    <meta name="msapplication-TileColor" content="#0d6efd">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/icon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/icon-16x16.png') }}">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
     <!-- Bootstrap CSS (Replit dark theme) -->
     <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     
@@ -63,5 +80,62 @@
     <script src="https://vjs.zencdn.net/8.0.4/video.min.js"></script>
     
     {% block scripts %}{% endblock %}
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+        
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button/banner
+            const installBanner = document.createElement('div');
+            installBanner.id = 'installBanner';
+            installBanner.className = 'alert alert-info alert-dismissible fade show position-fixed';
+            installBanner.style.cssText = 'top: 70px; right: 20px; z-index: 1050; max-width: 350px;';
+            installBanner.innerHTML = `
+                <strong><i class="fas fa-download me-2"></i>Cài đặt ứng dụng</strong><br>
+                Thêm vào màn hình chính để sử dụng như phần mềm
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                <div class="mt-2">
+                    <button class="btn btn-primary btn-sm" id="installBtn">
+                        <i class="fas fa-plus me-1"></i> Cài đặt
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(installBanner);
+            
+            document.getElementById('installBtn').addEventListener('click', () => {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    installBanner.remove();
+                });
+            });
+            
+            // Auto-hide banner after 10 seconds
+            setTimeout(() => {
+                if (document.getElementById('installBanner')) {
+                    installBanner.remove();
+                }
+            }, 10000);
+        });
+    </script>
 </body>
 </html>
