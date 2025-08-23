@@ -65,16 +65,13 @@ document.addEventListener('DOMContentLoaded', function() {
         cameraStatus.innerHTML = '<i class="fas fa-times-circle me-1"></i> Camera Error';
     });
     
-    // Always focus on input for barcode scanner
+    // Focus on barcode scanner input only when needed
     function focusInput() {
         orderIdInput.focus();
     }
     
-    // Focus input immediately and after any click
+    // Focus input only on initial load
     focusInput();
-    document.addEventListener('click', () => {
-        setTimeout(focusInput, 100);
-    });
     
     // Barcode scanner detection
     orderIdInput.addEventListener('input', function(e) {
