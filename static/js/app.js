@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let recordingSeconds = 0;
     let isRecording = false;
     let scanTimeout;
+    let currentOrderId = '';
     
     // Initialize camera for recording only
     navigator.mediaDevices.getUserMedia({
@@ -171,6 +172,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         isRecording = true;
         
+        // Store current order ID before clearing input
+        currentOrderId = orderIdInput.value.trim();
+        
         // Clear input for next scan
         orderIdInput.value = '';
         
@@ -229,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(videoBlob => {
                 const formData = new FormData();
                 formData.append('video', videoBlob, 'recording.mp4');
-                formData.append('order_id', orderIdInput.value);
+                formData.append('order_id', currentOrderId);
                 
                 // Show saving status
                 recordingStatusText.textContent = 'Đang lưu video...';
@@ -261,7 +265,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     recordingOverlay.classList.remove('recording');
                     recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
                     
-                    // Clear both inputs and focus for next barcode scan
+                    // Reset for next order
+                    currentOrderId = '';
                     orderIdInput.value = '';
                     manualOrderInput.value = '';
                     focusInput();
@@ -279,7 +284,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordingOverlay.classList.remove('recording');
                 recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
                 
-                // Clear both inputs and focus for next barcode scan even on error
+                // Reset for next order even on error
+                currentOrderId = '';
                 orderIdInput.value = '';
                 manualOrderInput.value = '';
                 focusInput();
