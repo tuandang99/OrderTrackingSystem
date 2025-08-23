@@ -170,7 +170,7 @@
                 
                 <div class="mb-3">
                     <label for="orderIdInput" class="form-label">
-                        <i class="fas fa-barcode me-2"></i>Quét mã vạch đơn hàng:
+                        <i class="fas fa-barcode me-2"></i>Quét mã vạch đơn hàng (Tự động):
                     </label>
                     <div class="input-group">
                         <span class="input-group-text bg-warning">
@@ -181,6 +181,25 @@
                     <small class="form-text text-warning">
                         <i class="fas fa-info-circle me-1"></i>
                         <strong>Hướng dẫn:</strong> Quét mã vạch đầu tiên để bắt đầu quay, quét lần thứ 2 để kết thúc
+                    </small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="manualOrderInput" class="form-label">
+                        <i class="fas fa-keyboard me-2"></i>Nhập thủ công (Dự phòng):
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-info">
+                            <i class="fas fa-keyboard"></i>
+                        </span>
+                        <input type="text" id="manualOrderInput" class="form-control form-control-lg" placeholder="Nhập mã đơn hàng bằng tay..." autocomplete="off">
+                        <button class="btn btn-primary btn-lg" type="button" id="manualStartBtn">
+                            <i class="fas fa-play me-1"></i> Bắt đầu
+                        </button>
+                    </div>
+                    <small class="form-text text-info">
+                        <i class="fas fa-hand-pointer me-1"></i>
+                        <strong>Sử dụng khi máy quét lỗi:</strong> Nhập mã và bấm "Bắt đầu" để quay video
                     </small>
                 </div>
                 

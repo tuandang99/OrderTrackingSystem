@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const qrSuccessText = document.getElementById('qrSuccessText');
     const cameraStatus = document.getElementById('cameraStatus');
     const recordingOverlay = document.getElementById('recordingOverlay');
+    const manualOrderInput = document.getElementById('manualOrderInput');
+    const manualStartBtn = document.getElementById('manualStartBtn');
     
     // Variables
     let recordingInterval;
@@ -113,6 +115,44 @@ document.addEventListener('DOMContentLoaded', function() {
             stopRecording();
         }
     }
+    
+    // Handle manual start button
+    function handleManualStart() {
+        const orderId = manualOrderInput.value.trim();
+        
+        if (orderId === '') {
+            alert('Vui lòng nhập mã đơn hàng');
+            manualOrderInput.focus();
+            return;
+        }
+        
+        if (isRecording) {
+            alert('Đang quay video. Vui lòng dừng lại trước khi bắt đầu mới');
+            return;
+        }
+        
+        // Set the order ID and start recording
+        orderIdInput.value = orderId;
+        
+        qrSuccessText.textContent = `Mã đơn hàng: ${orderId} - Bắt đầu quay (Thủ công)`;
+        qrSuccess.classList.add('show');
+        
+        setTimeout(() => {
+            qrSuccess.classList.remove('show');
+        }, 2000);
+        
+        startRecording();
+    }
+    
+    // Manual start button event listener
+    manualStartBtn.addEventListener('click', handleManualStart);
+    
+    // Allow Enter key in manual input
+    manualOrderInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleManualStart();
+        }
+    });
     
     // Start recording button event
     startRecordingBtn.addEventListener('click', () => {
@@ -224,8 +264,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     recordingOverlay.classList.remove('recording');
                     recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
                     
-                    // Clear input and focus for next barcode scan
+                    // Clear both inputs and focus for next barcode scan
                     orderIdInput.value = '';
+                    manualOrderInput.value = '';
                     focusInput();
                     
                 } else {
@@ -241,8 +282,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordingOverlay.classList.remove('recording');
                 recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
                 
-                // Clear input and focus for next barcode scan even on error
+                // Clear both inputs and focus for next barcode scan even on error
                 orderIdInput.value = '';
+                manualOrderInput.value = '';
                 focusInput();
             });
     }
