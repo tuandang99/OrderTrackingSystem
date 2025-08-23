@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
@@ -175,3 +175,60 @@ def delete_video(video_id):
     except Exception as e:
         logger.error(f"Error deleting video: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+def cleanup_old_videos():
+    """Clean up videos older than 20 days"""
+    try:
+        # Calculate cutoff date (20 days ago)
+        cutoff_date = datetime.utcnow() - timedelta(days=20)
+        
+        # Find videos older than 20 days
+        old_videos = OrderVideo.query.filter(OrderVideo.created_at < cutoff_date).all()
+        
+        deleted_count = 0
+        for video in old_videos:
+            try:
+                # Delete file from filesystem
+                file_path = os.path.join(app.static_folder or 'static', video.file_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    logger.info(f"Deleted old video file: {file_path}")
+                
+                # Delete from database
+                db.session.delete(video)
+                deleted_count += 1
+                
+            except Exception as e:
+                logger.error(f"Error deleting video {video.id}: {str(e)}")
+                continue
+        
+        # Commit all deletions
+        if deleted_count > 0:
+            db.session.commit()
+            logger.info(f"Cleanup completed: {deleted_count} old videos deleted")
+        else:
+            logger.info("Cleanup completed: No old videos to delete")
+            
+        return deleted_count
+        
+    except Exception as e:
+        logger.error(f"Error during video cleanup: {str(e)}")
+        db.session.rollback()
+        return 0
+
+@app.route('/cleanup-videos', methods=['POST'])
+def manual_cleanup():
+    """Manual cleanup endpoint for old videos"""
+    try:
+        deleted_count = cleanup_old_videos()
+        return jsonify({
+            'success': True,
+            'message': f'Cleanup completed: {deleted_count} old videos deleted'
+        })
+    except Exception as e:
+        logger.error(f"Manual cleanup error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+# Clean up old videos on startup (after functions are defined)
+with app.app_context():
+    cleanup_old_videos()

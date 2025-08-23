@@ -9,9 +9,14 @@
                     <i class="fas fa-film me-2"></i>
                     Recorded Videos
                 </h5>
-                <a href="/" class="btn btn-sm btn-primary">
-                    <i class="fas fa-plus me-1"></i> Record New
-                </a>
+                <div>
+                    <button id="cleanupBtn" class="btn btn-sm btn-warning me-2">
+                        <i class="fas fa-trash-alt me-1"></i> Clean Old Videos (>20 days)
+                    </button>
+                    <a href="/" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> Record New
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <form action="/search" method="get" class="mb-4">
@@ -143,4 +148,43 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/videoPlayer.js') }}"></script>
+<script>
+// Add cleanup functionality
+document.getElementById('cleanupBtn').addEventListener('click', function() {
+    if (confirm('Bạn có chắc chắn muốn xóa tất cả video cũ hơn 20 ngày không? Hành động này không thể hoàn tác.')) {
+        const btn = this;
+        const originalText = btn.innerHTML;
+        
+        // Show loading state
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang xóa...';
+        btn.disabled = true;
+        
+        fetch('/cleanup-videos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Reload page to show updated video list
+                window.location.reload();
+            } else {
+                alert('Lỗi: ' + (data.error || 'Không thể xóa video'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Có lỗi xảy ra khi xóa video: ' + error.message);
+        })
+        .finally(() => {
+            // Restore button state
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+});
+</script>
 {% endblock %}
