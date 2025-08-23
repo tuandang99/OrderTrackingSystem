@@ -211,7 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         savedVideoAlert.classList.add('d-none');
                     }, 5000);
                     
-                    // Focus input for next barcode scan
+                    // Clear input and focus for next barcode scan
+                    orderIdInput.value = '';
                     focusInput();
                     
                 } else {
@@ -223,7 +224,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 recordingStatusText.textContent = 'Lỗi khi lưu video';
                 alert('Error saving video: ' + error.message);
                 
-                // Focus input for next barcode scan even on error
+                // Clear input and focus for next barcode scan even on error
+                orderIdInput.value = '';
                 focusInput();
             });
     }
