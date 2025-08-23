@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const qrSuccess = document.getElementById('qrSuccess');
     const qrSuccessText = document.getElementById('qrSuccessText');
     const cameraStatus = document.getElementById('cameraStatus');
+    const recordingOverlay = document.getElementById('recordingOverlay');
     
     // Variables
     let recordingInterval;
@@ -136,6 +137,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear input for next scan
         orderIdInput.value = '';
         
+        // Update recording overlay
+        recordingOverlay.classList.add('recording');
+        recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-video me-2"></i><div>ĐANG QUAY VIDEO</div>';
+        
         // Update UI
         startRecordingBtn.disabled = true;
         stopRecordingBtn.disabled = false;
@@ -167,6 +172,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!isRecording) return;
         
         isRecording = false;
+        
+        // Update recording overlay to processing state
+        recordingOverlay.classList.remove('recording');
+        recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i><div>Đang xử lý video...</div>';
         
         // Update UI
         startRecordingBtn.disabled = false;
@@ -211,6 +220,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         savedVideoAlert.classList.add('d-none');
                     }, 5000);
                     
+                    // Reset overlay to ready state
+                    recordingOverlay.classList.remove('recording');
+                    recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
+                    
                     // Clear input and focus for next barcode scan
                     orderIdInput.value = '';
                     focusInput();
@@ -223,6 +236,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Video saving error:', error);
                 recordingStatusText.textContent = 'Lỗi khi lưu video';
                 alert('Error saving video: ' + error.message);
+                
+                // Reset overlay to ready state even on error
+                recordingOverlay.classList.remove('recording');
+                recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
                 
                 // Clear input and focus for next barcode scan even on error
                 orderIdInput.value = '';
