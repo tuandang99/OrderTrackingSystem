@@ -92,8 +92,8 @@
         <div class="card mb-4">
             <div class="card-header bg-dark d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                    <i class="fas fa-camera me-2"></i> 
-                    Order Packaging Video Recorder
+                    <i class="fas fa-barcode me-2"></i> 
+                    Barcode Scanner Video Recorder
                 </h5>
                 <span id="cameraStatus" class="badge bg-secondary">
                     <i class="fas fa-circle-notch fa-spin me-1"></i>
@@ -103,10 +103,10 @@
             <div class="card-body">
                 <div class="preview-container mb-3">
                     <video id="videoFeed" autoplay muted playsinline></video>
-                    <div id="qrOverlay" class="qr-overlay">
+                    <div id="qrOverlay" class="qr-overlay" style="display: none;">
                         <div class="text-center">
-                            <i class="fas fa-qrcode fa-3x mb-3"></i>
-                            <p>Scan a QR code to start recording</p>
+                            <i class="fas fa-barcode fa-3x mb-3"></i>
+                            <p>Sử dụng máy quét mã vạch bên dưới</p>
                         </div>
                     </div>
                     <div id="recordingIndicator" class="recording-indicator">
@@ -120,25 +120,27 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label for="orderIdInput" class="form-label">Order ID:</label>
+                    <label for="orderIdInput" class="form-label">
+                        <i class="fas fa-barcode me-2"></i>Quét mã vạch đơn hàng:
+                    </label>
                     <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-tag"></i>
+                        <span class="input-group-text bg-warning">
+                            <i class="fas fa-barcode"></i>
                         </span>
-                        <input type="text" id="orderIdInput" class="form-control" placeholder="Scan QR code or enter manually">
-                        <button id="scanButton" class="btn btn-secondary" type="button">
-                            <i class="fas fa-qrcode me-1"></i> Scan QR
-                        </button>
+                        <input type="text" id="orderIdInput" class="form-control form-control-lg" placeholder="Đưa máy quét vào đây để quét mã vạch..." autofocus autocomplete="off">
                     </div>
-                    <small class="form-text text-muted">Order ID will be automatically filled when a QR code is scanned</small>
+                    <small class="form-text text-warning">
+                        <i class="fas fa-info-circle me-1"></i>
+                        <strong>Hướng dẫn:</strong> Quét mã vạch đầu tiên để bắt đầu quay, quét lần thứ 2 để kết thúc
+                    </small>
                 </div>
                 
                 <div class="d-flex justify-content-between">
                     <button id="startRecordingBtn" class="btn btn-primary" disabled>
-                        <i class="fas fa-video me-1"></i> Start Recording
+                        <i class="fas fa-video me-1"></i> Bắt đầu quay
                     </button>
                     <button id="stopRecordingBtn" class="btn btn-danger" disabled>
-                        <i class="fas fa-stop-circle me-1"></i> Stop Recording
+                        <i class="fas fa-stop-circle me-1"></i> Kết thúc quay
                     </button>
                 </div>
             </div>
@@ -158,30 +160,30 @@
                     <label class="form-label">Camera Status:</label>
                     <div class="d-flex align-items-center">
                         <div id="cameraIndicator" class="bg-secondary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
-                        <span id="cameraStatusText">Initializing camera...</span>
+                        <span id="cameraStatusText">Đang khởi tạo camera...</span>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Recording Status:</label>
+                    <label class="form-label">Trạng thái quay:</label>
                     <div class="d-flex align-items-center">
                         <div id="recordingStatusIndicator" class="bg-secondary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
-                        <span id="recordingStatusText">Not recording</span>
+                        <span id="recordingStatusText">Chưa quay</span>
                     </div>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Recording Time:</label>
-                    <div id="recordingTime">00:00</div>
+                    <label class="form-label">Thời gian quay:</label>
+                    <div id="recordingTime" class="fs-4 fw-bold text-primary">00:00</div>
                 </div>
                 
                 <div id="savedVideoAlert" class="alert alert-success d-none">
                     <i class="fas fa-check-circle me-2"></i>
-                    Video saved successfully!
+                    Video đã lưu thành công!
                 </div>
                 
                 <div id="lastSavedVideo" class="d-none mt-3">
-                    <label class="form-label">Last Recorded Video:</label>
+                    <label class="form-label">Video vừa quay:</label>
                     <div class="d-flex align-items-center">
                         <i class="fas fa-file-video me-2"></i>
                         <a id="lastVideoLink" href="#" target="_blank"></a>
@@ -193,19 +195,22 @@
         <div class="card">
             <div class="card-header bg-dark">
                 <h5 class="mb-0">
-                    <i class="fas fa-question-circle me-2"></i>
-                    Instructions
+                    <i class="fas fa-info-circle me-2"></i>
+                    Hướng dẫn sử dụng
                 </h5>
             </div>
             <div class="card-body">
                 <ol class="mb-0">
-                    <li>Scan the order's QR code using the camera</li>
-                    <li>The Order ID will be automatically populated</li>
-                    <li>Recording will start automatically after scanning</li>
-                    <li>Package the order while recording</li>
-                    <li>Click "Stop Recording" when finished</li>
-                    <li>The video will be saved with the order ID and date</li>
+                    <li><strong>Quét mã vạch lần 1:</strong> Đưa máy quét vào ô nhập liệu và quét mã đơn hàng</li>
+                    <li><strong>Bắt đầu quay:</strong> Video sẽ tự động bắt đầu quay sau khi quét</li>
+                    <li><strong>Đóng gói:</strong> Thực hiện đóng gói đơn hàng trong khi quay</li>
+                    <li><strong>Quét mã vạch lần 2:</strong> Quét lại mã vạch để tự động kết thúc quay</li>
+                    <li><strong>Hoàn thành:</strong> Video sẽ được lưu tự động với mã đơn hàng và ngày</li>
                 </ol>
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Lưu ý:</strong> Đảm bảo máy quét mã vạch được kết nối và hoạt động bình thường
+                </div>
             </div>
         </div>
     </div>
@@ -213,7 +218,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/qrScanner.js') }}"></script>
 <script src="{{ url_for('static', filename='js/videoRecording.js') }}"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% endblock %}

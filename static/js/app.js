@@ -1,16 +1,14 @@
 /**
- * Main application script - Initialize components and handle events
+ * Main application script - Barcode Scanner Mode
  */
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize components
-    const qrScanner = new QRScanner('videoFeed', 'qrOverlay');
     const videoRecorder = new VideoRecorder('videoFeed');
     
     // DOM elements
     const startRecordingBtn = document.getElementById('startRecordingBtn');
     const stopRecordingBtn = document.getElementById('stopRecordingBtn');
     const orderIdInput = document.getElementById('orderIdInput');
-    const scanButton = document.getElementById('scanButton');
     const recordingIndicator = document.getElementById('recordingIndicator');
     const cameraStatusText = document.getElementById('cameraStatusText');
     const cameraIndicator = document.getElementById('cameraIndicator');
@@ -28,53 +26,98 @@ document.addEventListener('DOMContentLoaded', function() {
     let recordingInterval;
     let recordingSeconds = 0;
     let isRecording = false;
+    let scanTimeout;
     
-    // Initialize camera
-    qrScanner.initCamera()
-        .then(() => {
-            // Update camera status
-            cameraStatusText.textContent = 'Camera ready';
-            cameraIndicator.className = 'bg-success rounded-circle me-2';
-            cameraStatus.className = 'badge bg-success';
-            cameraStatus.innerHTML = '<i class="fas fa-check-circle me-1"></i> Camera Ready';
-            
-            // Enable buttons
-            startRecordingBtn.disabled = false;
-            
-            // Start QR scanning
-            qrScanner.startScanning();
-        })
-        .catch(error => {
-            console.error('Camera initialization error:', error);
-            cameraStatusText.textContent = 'Camera error: ' + error.message;
-            cameraIndicator.className = 'bg-danger rounded-circle me-2';
-            cameraStatus.className = 'badge bg-danger';
-            cameraStatus.innerHTML = '<i class="fas fa-times-circle me-1"></i> Camera Error';
-        });
-    
-    // QR code detected event
-    qrScanner.onQRCodeDetected = (qrData) => {
-        // Set the order ID
-        orderIdInput.value = qrData;
-        
-        // Show success notification
-        qrSuccessText.textContent = `QR Code Detected: ${qrData}`;
-        qrSuccess.classList.add('show');
-        
-        setTimeout(() => {
-            qrSuccess.classList.remove('show');
-        }, 3000);
-        
-        // Automatically start recording if not already recording
-        if (!isRecording && orderIdInput.value) {
-            startRecording();
+    // Initialize camera for recording only
+    navigator.mediaDevices.getUserMedia({
+        video: {
+            facingMode: 'environment',
+            width: { ideal: 3840 },
+            height: { ideal: 2160 }
         }
-    };
+    })
+    .then(stream => {
+        document.getElementById('videoFeed').srcObject = stream;
+        
+        // Update camera status
+        cameraStatusText.textContent = 'Camera sẵn sàng quay';
+        cameraIndicator.className = 'bg-success rounded-circle me-2';
+        cameraStatus.className = 'badge bg-success';
+        cameraStatus.innerHTML = '<i class="fas fa-check-circle me-1"></i> Camera Ready';
+        
+        // Enable buttons
+        startRecordingBtn.disabled = false;
+        
+        // Hide overlay since we're using barcode scanner
+        const qrOverlay = document.getElementById('qrOverlay');
+        if (qrOverlay) {
+            qrOverlay.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        console.error('Camera initialization error:', error);
+        cameraStatusText.textContent = 'Camera error: ' + error.message;
+        cameraIndicator.className = 'bg-danger rounded-circle me-2';
+        cameraStatus.className = 'badge bg-danger';
+        cameraStatus.innerHTML = '<i class="fas fa-times-circle me-1"></i> Camera Error';
+    });
+    
+    // Always focus on input for barcode scanner
+    function focusInput() {
+        orderIdInput.focus();
+    }
+    
+    // Focus input immediately and after any click
+    focusInput();
+    document.addEventListener('click', () => {
+        setTimeout(focusInput, 100);
+    });
+    
+    // Barcode scanner detection
+    orderIdInput.addEventListener('input', function(e) {
+        const orderId = e.target.value.trim();
+        
+        if (orderId.length > 0) {
+            // Clear any existing timeout
+            clearTimeout(scanTimeout);
+            
+            // Set timeout to detect when scanning is complete (after 100ms of no input)
+            scanTimeout = setTimeout(() => {
+                handleBarcodeScanned(orderId);
+            }, 100);
+        }
+    });
+    
+    // Handle barcode scanned
+    function handleBarcodeScanned(orderId) {
+        if (!isRecording) {
+            // First scan - start recording
+            qrSuccessText.textContent = `Mã đơn hàng: ${orderId} - Bắt đầu quay`;
+            qrSuccess.classList.add('show');
+            
+            setTimeout(() => {
+                qrSuccess.classList.remove('show');
+            }, 2000);
+            
+            startRecording();
+        } else {
+            // Second scan - stop recording
+            qrSuccessText.textContent = `Hoàn thành đóng gói - Kết thúc quay`;
+            qrSuccess.classList.add('show');
+            
+            setTimeout(() => {
+                qrSuccess.classList.remove('show');
+            }, 2000);
+            
+            stopRecording();
+        }
+    }
     
     // Start recording button event
     startRecordingBtn.addEventListener('click', () => {
         if (orderIdInput.value.trim() === '') {
-            alert('Please scan a QR code or enter an Order ID');
+            alert('Vui lòng quét mã vạch để nhập mã đơn hàng');
+            focusInput();
             return;
         }
         
@@ -84,36 +127,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // Stop recording button event
     stopRecordingBtn.addEventListener('click', stopRecording);
     
-    // Scan QR button event
-    scanButton.addEventListener('click', () => {
-        // Show QR overlay when manually starting scan
-        const qrOverlay = document.getElementById('qrOverlay');
-        if (qrOverlay) {
-            qrOverlay.style.display = 'flex';
-        }
-        qrScanner.startScanning();
-    });
-    
     // Start recording function
     function startRecording() {
         if (isRecording) return;
         
         isRecording = true;
         
-        // Hide QR overlay when recording starts
-        const qrOverlay = document.getElementById('qrOverlay');
-        if (qrOverlay) {
-            qrOverlay.style.display = 'none';
-        }
-        
-        // Stop QR scanning
-        qrScanner.stopScanning();
+        // Clear input for next scan
+        orderIdInput.value = '';
         
         // Update UI
         startRecordingBtn.disabled = true;
         stopRecordingBtn.disabled = false;
         recordingIndicator.style.display = 'flex';
-        recordingStatusText.textContent = 'Recording in progress';
+        recordingStatusText.textContent = 'Đang quay video';
         recordingStatusIndicator.className = 'bg-danger rounded-circle me-2';
         
         // Reset timer
@@ -145,7 +172,7 @@ document.addEventListener('DOMContentLoaded', function() {
         startRecordingBtn.disabled = false;
         stopRecordingBtn.disabled = true;
         recordingIndicator.style.display = 'none';
-        recordingStatusText.textContent = 'Not recording';
+        recordingStatusText.textContent = 'Chưa quay';
         recordingStatusIndicator.className = 'bg-secondary rounded-circle me-2';
         
         // Stop timer
@@ -159,7 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append('order_id', orderIdInput.value);
                 
                 // Show saving status
-                recordingStatusText.textContent = 'Saving video...';
+                recordingStatusText.textContent = 'Đang lưu video...';
                 
                 // Upload video to server
                 return fetch('/save-video', {
@@ -172,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     // Show success message
                     savedVideoAlert.classList.remove('d-none');
-                    recordingStatusText.textContent = 'Video saved';
+                    recordingStatusText.textContent = 'Đã lưu video';
                     
                     // Show last saved video link
                     lastSavedVideo.classList.remove('d-none');
@@ -184,12 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         savedVideoAlert.classList.add('d-none');
                     }, 5000);
                     
-                    // Show QR overlay again and restart scanning
-                    const qrOverlay = document.getElementById('qrOverlay');
-                    if (qrOverlay) {
-                        qrOverlay.style.display = 'flex';
-                    }
-                    qrScanner.startScanning();
+                    // Focus input for next barcode scan
+                    focusInput();
                     
                 } else {
                     throw new Error(data.error || 'Error saving video');
@@ -197,15 +220,11 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Video saving error:', error);
-                recordingStatusText.textContent = 'Error saving video';
+                recordingStatusText.textContent = 'Lỗi khi lưu video';
                 alert('Error saving video: ' + error.message);
                 
-                // Show QR overlay again and restart scanning even on error
-                const qrOverlay = document.getElementById('qrOverlay');
-                if (qrOverlay) {
-                    qrOverlay.style.display = 'flex';
-                }
-                qrScanner.startScanning();
+                // Focus input for next barcode scan even on error
+                focusInput();
             });
     }
     
