@@ -86,6 +86,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Scan QR button event
     scanButton.addEventListener('click', () => {
+        // Show QR overlay when manually starting scan
+        const qrOverlay = document.getElementById('qrOverlay');
+        if (qrOverlay) {
+            qrOverlay.style.display = 'flex';
+        }
         qrScanner.startScanning();
     });
     
@@ -94,6 +99,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (isRecording) return;
         
         isRecording = true;
+        
+        // Hide QR overlay when recording starts
+        const qrOverlay = document.getElementById('qrOverlay');
+        if (qrOverlay) {
+            qrOverlay.style.display = 'none';
+        }
+        
+        // Stop QR scanning
+        qrScanner.stopScanning();
         
         // Update UI
         startRecordingBtn.disabled = true;
@@ -169,6 +183,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     setTimeout(() => {
                         savedVideoAlert.classList.add('d-none');
                     }, 5000);
+                    
+                    // Show QR overlay again and restart scanning
+                    const qrOverlay = document.getElementById('qrOverlay');
+                    if (qrOverlay) {
+                        qrOverlay.style.display = 'flex';
+                    }
+                    qrScanner.startScanning();
+                    
                 } else {
                     throw new Error(data.error || 'Error saving video');
                 }
@@ -177,6 +199,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Video saving error:', error);
                 recordingStatusText.textContent = 'Error saving video';
                 alert('Error saving video: ' + error.message);
+                
+                // Show QR overlay again and restart scanning even on error
+                const qrOverlay = document.getElementById('qrOverlay');
+                if (qrOverlay) {
+                    qrOverlay.style.display = 'flex';
+                }
+                qrScanner.startScanning();
             });
     }
     
