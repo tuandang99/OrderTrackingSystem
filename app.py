@@ -33,7 +33,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 # Ensure videos directory exists
-VIDEOS_DIR = os.path.join(app.static_folder, 'videos')
+VIDEOS_DIR = os.path.join(app.static_folder or 'static', 'videos')
 if not os.path.exists(VIDEOS_DIR):
     os.makedirs(VIDEOS_DIR)
 
@@ -112,10 +112,9 @@ def save_video():
         
         # Store in database
         relative_path = os.path.join('videos', today, filename)
-        new_video = OrderVideo(
-            order_id=order_id,
-            file_path=relative_path
-        )
+        new_video = OrderVideo()
+        new_video.order_id = order_id
+        new_video.file_path = relative_path
         db.session.add(new_video)
         db.session.commit()
         
@@ -163,7 +162,7 @@ def delete_video(video_id):
         video = OrderVideo.query.get_or_404(video_id)
         
         # Delete file from filesystem
-        file_path = os.path.join(app.static_folder, video.file_path)
+        file_path = os.path.join(app.static_folder or 'static', video.file_path)
         if os.path.exists(file_path):
             os.remove(file_path)
         

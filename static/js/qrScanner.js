@@ -29,12 +29,12 @@ class QRScanner {
                 return;
             }
             
-            // Request camera with constraints for best QR scanning
+            // Request camera with constraints for 4K recording
             navigator.mediaDevices.getUserMedia({
                 video: {
                     facingMode: 'environment', // Use back camera if available
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    width: { ideal: 3840 },
+                    height: { ideal: 2160 }
                 }
             })
             .then(stream => {

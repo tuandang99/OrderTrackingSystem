@@ -34,10 +34,10 @@ class VideoRecorder {
             this.recordedChunks = [];
             
             try {
-                // Create MediaRecorder with options for better quality
+                // Create MediaRecorder with options for 4K quality
                 this.mediaRecorder = new MediaRecorder(this.videoElement.srcObject, {
                     mimeType: this.getSupportedMimeType(),
-                    videoBitsPerSecond: 2500000 // 2.5 Mbps for good quality
+                    videoBitsPerSecond: 15000000 // 15 Mbps for 4K quality
                 });
                 
                 // Event handler for recorded data
