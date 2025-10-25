@@ -22,7 +22,9 @@ app.secret_key = os.environ.get("SESSION_SECRET")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the SQLite database (using a file-based database for simplicity)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///ordervideos.db")
+# Use SQLite explicitly instead of DATABASE_URL
+# The three slashes after sqlite: means it's relative to Flask's instance folder
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ordervideos.db"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
