@@ -2,11 +2,9 @@
  * Video player functionality for the videos page
  */
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Video.js player
-    let player = null;
-    
     // DOM elements
     const videoPreviewModal = document.getElementById('videoPreviewModal');
+    const videoPlayer = document.getElementById('videoPlayer');
     const previewOrderId = document.getElementById('previewOrderId');
     const downloadVideoBtn = document.getElementById('downloadVideoBtn');
     const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -29,20 +27,9 @@ document.addEventListener('DOMContentLoaded', function() {
             previewOrderId.textContent = orderId;
             downloadVideoBtn.href = videoSrc;
             
-            // Initialize or update video player
-            if (player) {
-                player.src({ src: videoSrc, type: 'video/mp4' });
-            } else {
-                player = videojs('videoPlayer', {
-                    controls: true,
-                    autoplay: false,
-                    preload: 'auto',
-                    fluid: true,
-                    playbackRates: [0.5, 1, 1.5, 2]
-                });
-                
-                player.src({ src: videoSrc, type: 'video/mp4' });
-            }
+            // Update video source
+            videoPlayer.src = videoSrc;
+            videoPlayer.load();
             
             // Show modal
             videoModal.show();
@@ -51,9 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle video player modal close
     videoPreviewModal.addEventListener('hidden.bs.modal', function() {
-        if (player) {
-            player.pause();
-        }
+        videoPlayer.pause();
+        videoPlayer.currentTime = 0;
     });
     
     // Handle delete button clicks
