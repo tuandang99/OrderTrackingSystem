@@ -22,7 +22,9 @@ app.secret_key = os.environ.get("SESSION_SECRET")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
 # Configure the SQLite database (using a file-based database for simplicity)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///ordervideos.db")
+# Use SQLite explicitly instead of DATABASE_URL
+# The three slashes after sqlite: means it's relative to Flask's instance folder
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///ordervideos.db"
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -111,7 +113,8 @@ def save_video():
         video_file.save(filepath)
         
         # Store in database
-        relative_path = os.path.join('videos', today, filename)
+        # Use forward slash for web URLs (works on both Windows and Linux)
+        relative_path = f'videos/{today}/{filename}'
         new_video = OrderVideo()
         new_video.order_id = order_id
         new_video.file_path = relative_path
@@ -229,6 +232,19 @@ def manual_cleanup():
         logger.error(f"Manual cleanup error: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# Clean up old videos on startup (after functions are defined)
+# Fix old video paths and clean up old videos on startup
 with app.app_context():
+    # Fix any file paths with backslashes (Windows) to use forward slashes (web)
+    from models import OrderVideo
+    all_videos = OrderVideo.query.all()
+    videos_fixed = 0
+    for video in all_videos:
+        if '\\' in video.file_path:
+            video.file_path = video.file_path.replace('\\', '/')
+            videos_fixed += 1
+    
+    if videos_fixed > 0:
+        db.session.commit()
+        logger.info(f"Fixed {videos_fixed} video paths to use forward slashes")
+    
     cleanup_old_videos()
