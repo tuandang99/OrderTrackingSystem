@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let isRecording = false;
     let scanTimeout;
     let currentOrderId = '';
+    let lastScanTime = 0;
+    let scanCooldown = 2000; // 2 seconds cooldown between scans to prevent duplicates
     
     // Initialize camera for recording only
     navigator.mediaDevices.getUserMedia({
@@ -91,6 +93,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Handle barcode scanned
     function handleBarcodeScanned(orderId) {
+        // Check cooldown to prevent duplicate scans
+        const currentTime = Date.now();
+        if (currentTime - lastScanTime < scanCooldown) {
+            console.log('Scan ignored - cooldown period');
+            orderIdInput.value = ''; // Clear input to prevent re-processing
+            return;
+        }
+        
+        // Update last scan time
+        lastScanTime = currentTime;
+        
         if (!isRecording) {
             // First scan - start recording
             qrSuccessText.textContent = `Mã đơn hàng: ${orderId} - Bắt đầu quay`;
