@@ -12,6 +12,9 @@ class VideoRecorder {
         this.mediaRecorder = null;
         this.recordedChunks = [];
         this.isRecording = false;
+        this.stream = null;
+        this.onError = null; // Callback for errors
+        this.onStreamEnd = null; // Callback when stream ends unexpectedly
     }
     
     /**
@@ -34,16 +37,19 @@ class VideoRecorder {
             this.recordedChunks = [];
             
             try {
+                this.stream = this.videoElement.srcObject;
+                
                 // Create MediaRecorder with options for 4K quality
-                this.mediaRecorder = new MediaRecorder(this.videoElement.srcObject, {
+                this.mediaRecorder = new MediaRecorder(this.stream, {
                     mimeType: this.getSupportedMimeType(),
                     videoBitsPerSecond: 15000000 // 15 Mbps for 4K quality
                 });
                 
-                // Event handler for recorded data
+                // Event handler for recorded data - receives chunks every second
                 this.mediaRecorder.ondataavailable = (event) => {
                     if (event.data.size > 0) {
                         this.recordedChunks.push(event.data);
+                        console.log(`Recorded chunk: ${event.data.size} bytes, total chunks: ${this.recordedChunks.length}`);
                     }
                 };
                 
@@ -52,8 +58,28 @@ class VideoRecorder {
                     this.isRecording = false;
                 };
                 
-                // Start recording
-                this.mediaRecorder.start();
+                // Event handler for errors
+                this.mediaRecorder.onerror = (event) => {
+                    console.error('MediaRecorder error:', event.error);
+                    this.isRecording = false;
+                    if (this.onError) {
+                        this.onError(event.error);
+                    }
+                };
+                
+                // Monitor stream tracks for unexpected end
+                this.stream.getTracks().forEach(track => {
+                    track.onended = () => {
+                        console.warn('Track ended unexpectedly');
+                        if (this.isRecording && this.onStreamEnd) {
+                            this.onStreamEnd();
+                        }
+                    };
+                });
+                
+                // Start recording with timeslice of 1000ms (1 second)
+                // This ensures data is captured every second, so we don't lose everything if there's an error
+                this.mediaRecorder.start(1000);
                 this.isRecording = true;
                 resolve();
             } catch (error) {
@@ -69,7 +95,16 @@ class VideoRecorder {
     stopRecording() {
         return new Promise((resolve, reject) => {
             if (!this.isRecording || !this.mediaRecorder) {
-                reject(new Error('Not recording'));
+                // If not recording but we have chunks, return them anyway (error recovery)
+                if (this.recordedChunks.length > 0) {
+                    console.log('Recovering video from chunks despite not recording state');
+                    const videoBlob = new Blob(this.recordedChunks, {
+                        type: this.getSupportedMimeType()
+                    });
+                    resolve(videoBlob);
+                } else {
+                    reject(new Error('Not recording'));
+                }
                 return;
             }
             
@@ -83,16 +118,44 @@ class VideoRecorder {
                         type: this.getSupportedMimeType()
                     });
                     
+                    console.log(`Final video: ${videoBlob.size} bytes from ${this.recordedChunks.length} chunks`);
                     resolveStop(videoBlob);
                 };
             });
             
-            // Stop recording
-            this.mediaRecorder.stop();
-            
-            // Wait for recording to stop and return video blob
-            stopPromise.then(resolve).catch(reject);
+            try {
+                // Stop recording
+                this.mediaRecorder.stop();
+                
+                // Wait for recording to stop and return video blob
+                stopPromise.then(resolve).catch(reject);
+            } catch (error) {
+                // If stop fails, try to recover chunks anyway
+                console.error('Error stopping recording, attempting recovery:', error);
+                if (this.recordedChunks.length > 0) {
+                    const videoBlob = new Blob(this.recordedChunks, {
+                        type: this.getSupportedMimeType()
+                    });
+                    resolve(videoBlob);
+                } else {
+                    reject(error);
+                }
+            }
         });
+    }
+    
+    /**
+     * Force save current recording (emergency save)
+     * @returns {Blob|null} Video blob if chunks are available
+     */
+    emergencySave() {
+        if (this.recordedChunks.length > 0) {
+            console.log(`Emergency save: ${this.recordedChunks.length} chunks`);
+            return new Blob(this.recordedChunks, {
+                type: this.getSupportedMimeType()
+            });
+        }
+        return null;
     }
     
     /**
