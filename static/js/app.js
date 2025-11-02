@@ -5,6 +5,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize components
     const videoRecorder = new VideoRecorder('videoFeed');
     
+    // Set up error handlers for video recorder
+    videoRecorder.onError = (error) => {
+        console.error('Recording error occurred:', error);
+        alert('Lỗi khi quay video. Đang cố gắng lưu video...');
+        // Try to save what we have
+        attemptEmergencySave();
+    };
+    
+    videoRecorder.onStreamEnd = () => {
+        console.warn('Stream ended unexpectedly');
+        alert('Camera bị ngắt kết nối. Đang lưu video...');
+        // Try to save what we have
+        attemptEmergencySave();
+    };
+    
     // DOM elements
     const startRecordingBtn = document.getElementById('startRecordingBtn');
     const stopRecordingBtn = document.getElementById('stopRecordingBtn');
@@ -310,5 +325,74 @@ document.addEventListener('DOMContentLoaded', function() {
         const minutes = Math.floor(recordingSeconds / 60).toString().padStart(2, '0');
         const seconds = (recordingSeconds % 60).toString().padStart(2, '0');
         recordingTime.textContent = `${minutes}:${seconds}`;
+    }
+    
+    // Emergency save function - saves video even if there's an error
+    function attemptEmergencySave() {
+        if (!currentOrderId) {
+            console.error('No order ID for emergency save');
+            return;
+        }
+        
+        // Try to get video blob from recorder
+        const videoBlob = videoRecorder.emergencySave();
+        
+        if (!videoBlob) {
+            console.error('No video data to save');
+            alert('Không có dữ liệu video để lưu');
+            return;
+        }
+        
+        console.log('Attempting emergency save...');
+        
+        // Update UI
+        recordingIndicator.style.display = 'none';
+        recordingStatusText.textContent = 'Đang lưu video khẩn cấp...';
+        clearInterval(recordingInterval);
+        isRecording = false;
+        
+        // Upload to server
+        const formData = new FormData();
+        formData.append('video', videoBlob, 'emergency_recording.mp4');
+        formData.append('order_id', currentOrderId);
+        
+        fetch('/save-video', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Video đã được lưu thành công!');
+                savedVideoAlert.classList.remove('d-none');
+                recordingStatusText.textContent = 'Đã lưu video (khẩn cấp)';
+                
+                // Show last saved video link
+                lastSavedVideo.classList.remove('d-none');
+                lastVideoLink.textContent = data.order_id;
+                lastVideoLink.href = `/static/${data.file_path}`;
+                
+                setTimeout(() => {
+                    savedVideoAlert.classList.add('d-none');
+                }, 5000);
+            } else {
+                throw new Error(data.error || 'Error saving video');
+            }
+        })
+        .catch(error => {
+            console.error('Emergency save failed:', error);
+            alert('Không thể lưu video: ' + error.message);
+        })
+        .finally(() => {
+            // Reset state
+            recordingOverlay.classList.remove('recording');
+            recordingOverlay.querySelector('.status-text').innerHTML = '<i class="fas fa-barcode me-2"></i><div>Quét mã vạch để bắt đầu quay</div>';
+            currentOrderId = '';
+            orderIdInput.value = '';
+            manualOrderInput.value = '';
+            startRecordingBtn.disabled = false;
+            stopRecordingBtn.disabled = true;
+            focusInput();
+        });
     }
 });
